@@ -1237,6 +1237,55 @@ add_constr_plan_splits <- function(
     add_to_constr(constr, "plan_splits", new_constr)
 }
 
+#' @param current The reference map for the phase-in school commute constraint,
+#' i.e. the current attendance areas.
+#' @param schools A vector of unit indices for schools. For example, if there
+#' are three schools located in precincts that correspond to rows 1 and 2 of
+#' your [redist_map], entering schools = c(1, 2) would indicate that.
+#' @param commute_times A numeric matrix (n_units × n_schools) of commute times
+#' (in seconds) from each geographical unit to each school. Can be computed via
+#' `redistmetrics::get_commute_matrix()`.
+#' @param total_pop An unquoted string indicating the total population column.
+#' @param score_districts_only Boolean indicating whether to only score districts or regions.
+#' @rdname constraints
+#' @export
+add_constr_phase_commute <- function(
+                            constr, 
+                            strength, 
+                            current, 
+                            schools, 
+                            commute_times, 
+                            only_districts = TRUE,
+                            thresh = NULL) {
+    if (!inherits(constr, "redist_constr")) cli::cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli::cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
+    if (missing(current)) current <- get_existing(data)
+    if (is.null(thresh)) {
+        # no thresholding
+        hard_constraint <- FALSE
+        hard_threshold <- 0
+    } else if (!rlang::is_scalar_atomic(thresh) || !is.finite(thresh)) {
+        cli::cli_abort("{.arg thresh} must be a finite scalar.")
+    } else {
+        hard_constraint <- TRUE
+        hard_threshold <- thresh
+    }
+
+    new_constr <- list(strength = strength,
+        current = eval_tidy(enquo(current), data),
+        schools = schools - 1L,
+        commute_times = commute_times,
+        only_districts = only_districts,
+        hard_constraint = hard_constraint,
+        hard_threshold = hard_threshold)
+    if (is.null(current) || length(new_constr$current) != nrow(data))
+        cli::cli_abort("{.arg current} must be provided, and must have as many
+                  precincts as the {.cls redist_map}")
+
+    add_to_constr(constr, "phase_commute", new_constr)
+}
+
 
 #' @param fn A function
 #' @rdname constraints

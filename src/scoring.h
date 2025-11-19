@@ -412,6 +412,38 @@ class PolsbyConstraint : public RegionConstraint {
             int const region1_id, int const region2_id) const override;
 };
 
+// Phase commute constraint
+class PhaseCommuteConstraint : public RegionConstraint {
+    private:
+        arma::uvec const current;
+        arma::uvec const schools;
+        arma::mat const commute_times;
+        arma::uvec const pop;
+        int const V;
+
+    public:
+        PhaseCommuteConstraint(
+            double const strength, const arma::uvec &current, const arma::uvec &schools, 
+            const arma::mat &commute_times, arma::uvec const &pop, int const V,
+            bool const score_districts_only, bool const hard_constraint, double const hard_threshold) :
+            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            current(current),
+            schools(schools),
+            commute_times(commute_times),
+            pop(pop),
+            V(V) {}
+
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
+};
+
 
 class CustomRegionConstraint : public RegionConstraint {
     private:

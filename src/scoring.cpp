@@ -534,6 +534,25 @@ double PolsbyConstraint::compute_raw_merged_region_constraint_score(
     return raw_score;
 }
 
+double PhaseCommuteConstraint::compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const{
+    double raw_score = eval_phase_commute_gsmc_version(
+        region_ids, 
+        current, schools, commute_times, pop, V,
+        region_id);
+
+    return raw_score;
+}
+// log constraint for region made by merging region 1 and 2
+double PhaseCommuteConstraint::compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const{
+    return 0;
+}
+
 
 double CustomRegionConstraint::compute_raw_region_constraint_score(
             int const num_regions, 
@@ -1130,6 +1149,36 @@ any_soft_custom_constraints(false), any_hard_custom_constraints(false){
                         as<arma::ivec>(constr_inst["to"]),
                         as<arma::vec>(constr_inst["area"]),
                         as<arma::vec>(constr_inst["perimeter"]),
+                        constr_score_districts_only, hard_constraint, hard_threshold
+                    ));
+            }
+        }
+    }
+    if (constraints.containsElementNamed("phase_commute")) {
+        Rcpp::List constr = constraints["phase_commute"];
+        for (int i = 0; i < constr.size(); i++) {
+            List constr_inst = constr[i];
+            double strength = constr_inst["strength"];
+            if (strength != 0) {
+                bool constr_score_districts_only = false;
+                if (constr_inst.containsElementNamed("only_districts")){
+                    constr_score_districts_only = as<bool>(constr_inst["only_districts"]);
+                }
+                bool hard_constraint = false;
+                if (constr_inst.containsElementNamed("hard_constraint")){
+                    hard_constraint = as<bool>(constr_inst["hard_constraint"]);
+                }
+                double hard_threshold = 0.0;
+                if (constr_inst.containsElementNamed("hard_threshold")){
+                    hard_threshold = as<double>(constr_inst["hard_threshold"]);
+                }
+                region_constraint_ptrs.emplace_back(
+                    std::make_unique<PhaseCommuteConstraint>(
+                        strength, 
+                        as<arma::uvec>(constr_inst["current"]), 
+                        as<arma::uvec>(constr_inst["schools"]),
+                        as<arma::mat>(constr_inst["commute_times"]),
+                        map_params.pop, map_params.V,
                         constr_score_districts_only, hard_constraint, hard_threshold
                     ));
             }

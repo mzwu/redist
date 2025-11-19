@@ -18,6 +18,7 @@
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
 \alias{add_constr_plan_splits}
+\alias{add_constr_phase_commute}
 \alias{add_constr_custom}
 \alias{add_constr_custom_plan}
 \title{Sampling constraints}
@@ -151,6 +152,16 @@ add_constr_plan_splits(
   thresh = NULL
 )
 
+add_constr_phase_commute(
+  constr,
+  strength,
+  current,
+  schools,
+  commute_times,
+  only_districts = TRUE,
+  thresh = NULL
+)
+
 add_constr_custom(constr, strength, fn, only_districts = FALSE, thresh = NULL)
 
 add_constr_custom_plan(
@@ -166,7 +177,8 @@ add_constr_custom_plan(
 
 \item{strength}{The strength of the constraint. Higher values mean a more restrictive constraint.}
 
-\item{current}{The reference map for the status quo constraint.}
+\item{current}{The reference map for the phase-in school commute constraint,
+i.e. the current attendance areas.}
 
 \item{only_districts}{Whether or not to apply the constraints to
 districts only. If constraints are only applied to districts then it will
@@ -181,7 +193,7 @@ sample.}
 
 \item{group_pop}{A vector of group population}
 
-\item{total_pop}{A vector of total population. Defaults to the population vector used for sampling.}
+\item{total_pop}{An unquoted string indicating the total population column.}
 
 \item{tgt_group, tgt_other}{Target group shares for the power-type constraint.}
 
@@ -208,7 +220,17 @@ having two or more incumbents be in the same district.}
 when the plan has a particular number of regions. A value of \code{FALSE} means
 the constraint will applied to plans at every step.}
 
+\item{schools}{A vector of unit indices for schools. For example, if there
+are three schools located in precincts that correspond to rows 1 and 2 of
+your \link{redist_map}, entering schools = c(1, 2) would indicate that.}
+
+\item{commute_times}{A numeric matrix (n_units × n_schools) of commute times
+(in seconds) from each geographical unit to each school. Can be computed via
+\code{redistmetrics::get_commute_matrix()}.}
+
 \item{fn}{A function}
+
+\item{score_districts_only}{Boolean indicating whether to only score districts or regions.}
 }
 \description{
 The \code{\link[=redist_smc]{redist_smc()}} and \code{\link[=redist_mergesplit]{redist_mergesplit()}} algorithms in this package allow

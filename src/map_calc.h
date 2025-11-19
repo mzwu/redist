@@ -283,6 +283,123 @@ double eval_sq_entropy(
 
 
 
+/*
+ * Compute the phase commute penalty for district `distr`
+ *
+ */
+template <typename PlanID>
+double eval_phase_commute_gsmc_version(
+    PlanID const &region_ids, 
+    const arma::uvec &current, 
+    const arma::uvec &schools, 
+    const arma::mat &commute_times,
+    arma::uvec const &pop,
+    int const V, int const region_id) {
+    double reassigned_pop = 0.0;
+    for (int k = 0; k < V; k++) {
+        if (region_ids[k] != region_id) continue; // only evaluate blocks in proposed district
+
+        // find school that is in proposed district and current district
+        int school_old_idx = -1;
+        int school_new_idx = -1;
+
+        for (int j = 0; j < schools.n_elem; j++) {
+            // check if school and block are in the same old district
+            if (current[schools[j]] == current[k]) {
+                school_old_idx = j;
+            }
+            // check if school and block are in the same proposed district
+            if (region_ids[schools[j]] == region_ids[k]) {
+                school_new_idx = j;
+            }
+            // both old zoned school and new zoned school have been found
+            if (school_old_idx != -1 && school_new_idx != -1) {
+                break;
+            }
+        }
+
+        // if schools are the same, no disruption
+        if (school_old_idx == school_new_idx) continue;
+        // if either school is not found, skip
+        if (school_old_idx == -1 || school_new_idx == -1) continue;
+
+        // compute and compare commute distances to old and new schools
+        double commute_old = commute_times(k, school_old_idx);
+        double commute_new = commute_times(k, school_new_idx);
+        if (commute_old < commute_new) {
+            double to_add = pop[k] * (commute_new - commute_old);
+            reassigned_pop += to_add;
+        }
+    }
+
+    // return log(1 + average extra commute time per person in the district)
+    double district_pop = 0.0;
+    for (size_t i = 0; i < region_ids.size(); ++i) {
+        if (region_ids[i] == static_cast<RegionID>(region_id)) {
+            district_pop += pop[i];
+        }
+    }
+    double avg_extra = (district_pop > 0.0) ? (reassigned_pop / district_pop) : 0.0;
+    return std::log1p(avg_extra);
+}
+
+
+
+/*
+ * Compute the max commute penalty for district `distr`
+ *
+ */
+template <typename PlanID>
+double eval_max_commute_gsmc_version(
+    PlanID const &region_ids, 
+    const arma::uvec &current, 
+    const arma::uvec &schools, 
+    const arma::mat &commute_times,
+    arma::uvec const &pop,
+    int const V, int const region_id) {
+    double max_extra = 0.0;
+    for (int k = 0; k < V; k++) {
+        if (region_ids[k] != region_id) continue; // only evaluate blocks in proposed district
+
+        // find school that is in proposed district and current district
+        int school_old_idx = -1;
+        int school_new_idx = -1;
+
+        for (int j = 0; j < schools.n_elem; j++) {
+            // check if school and block are in the same old district
+            if (current[schools[j]] == current[k]) {
+                school_old_idx = j;
+            }
+            // check if school and block are in the same proposed district
+            if (region_ids[schools[j]] == region_ids[k]) {
+                school_new_idx = j;
+            }
+            // both old zoned school and new zoned school have been found
+            if (school_old_idx != -1 && school_new_idx != -1) {
+                break;
+            }
+        }
+
+        // if schools are the same, no disruption
+        if (school_old_idx == school_new_idx) continue;
+        // if either school is not found, skip
+        if (school_old_idx == -1 || school_new_idx == -1) continue;
+
+        // compute and compare commute distances to old and new schools
+        double commute_old = commute_times(k, school_old_idx);
+        double commute_new = commute_times(k, school_new_idx);
+        double commute_extra = commute_new - commute_old;
+        if (commute_extra > max_extra) {
+            max_extra = commute_extra;
+        }
+    }
+
+    // return log(1 + max extra commute time for a person in the district)
+    return std::log1p(max_extra);
+}
+
+
+
 // helper function
 // calculates districts which appear in each county (but not zeros)
 template <typename PlanID>
