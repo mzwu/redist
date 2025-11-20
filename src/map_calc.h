@@ -414,7 +414,7 @@ double eval_split_feeders_gsmc_version(
     // Which lower level districts are sending students to the current upper level district? How many?
     std::unordered_map<int, int> lower_students;
     for (int v = 0; v < V; ++v) {
-        if (region_ids(v) != region_id) continue;
+        if (region_ids[v] != region_id) continue;
         if (lower_students.find(lower(v)) == lower_students.end()) {
             lower_students[lower(v)] = 0;
         }
@@ -451,7 +451,12 @@ double eval_capacity_gsmc_version(
     arma::uvec const &pop,
     int const V, int const region_id) {
     // Get all rows in the current district
-    uvec rows_in_district = find(region_ids == region_id);
+
+    arma::uvec rows_in_district;
+    rows_in_district.reserve(region_ids.size());
+    for (int i = 0; i < region_ids.size(); ++i) {
+        if (region_ids[i] == region_id) rows_in_district.insert_rows(rows_in_district.n_rows, 1).fill(i);
+    }
     if (rows_in_district.is_empty()) return 1000;
     
     // Which index in schools corresponds to the school for this district?
