@@ -862,6 +862,7 @@ redist_smc <- function(
 
   exist_name <- attr(map, "existing_col")
   if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
+    cli::cli_inform("REDIST_SMC exist_name: {exist_name}, ref_name: {ref_name}, ndists: {ndists}, final_dists: {final_dists}")
     ref_name <- if (!is.null(ref_name)) ref_name else exist_name
 
     if(districting_scheme == "multiple"){
@@ -869,6 +870,8 @@ redist_smc <- function(
     }else{
         ref_seats <- rep(1L, ndists)
     }
+
+    cli::cli_inform("REDIST_SMC ref_seats: {ref_seats}")
 
     out <- add_reference(
         plans = out,

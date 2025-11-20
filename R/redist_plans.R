@@ -497,6 +497,8 @@ add_reference <- function(plans, ref_plan, name = NULL, ref_seats = NULL) {
           "{.arg ref_plan} must have the same number of districts as {.arg plans}"
       )
   }else if(!setequal(ref_plan, seq_len(plan_ndists))){
+      cli::cli_inform("ref_plan: {ref_plan}")
+      cli::cli_inform("ref_seats: {ref_seats}")
       if(!is.null(ref_seats)){
           cli::cli_abort("{.arg ref_plan} must already be numbered 1 to {plan_ndists} if {.arg ref_seats} are also passed")
       }
