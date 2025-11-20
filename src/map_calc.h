@@ -451,11 +451,12 @@ double eval_capacity_gsmc_version(
     arma::uvec const &pop,
     int const V, int const region_id) {
     // Get all rows in the current district
-
-    arma::uvec rows_in_district;
-    rows_in_district.reserve(region_ids.size());
-    for (int i = 0; i < region_ids.size(); ++i) {
-        if (region_ids[i] == region_id) rows_in_district.insert_rows(rows_in_district.n_rows, 1).fill(i);
+    arma::uvec rows_in_district;  // starts empty
+    for (int i = 0; i < region_ids.n_elem; ++i) {
+        if (region_ids[i] == region_id) {
+            rows_in_district.insert_rows(rows_in_district.n_rows, 1);
+            rows_in_district(rows_in_district.n_rows - 1) = i;
+        }
     }
     if (rows_in_district.is_empty()) return 1000;
     
