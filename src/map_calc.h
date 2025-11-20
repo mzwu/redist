@@ -400,6 +400,88 @@ double eval_max_commute_gsmc_version(
 
 
 
+/*
+ * Compute the split feeders penalty for district `distr`
+ *
+ */
+template <typename PlanID>
+double eval_split_feeders_gsmc_version(
+    PlanID const &region_ids, 
+    const arma::uvec &lower, 
+    const arma::uvec &schools, 
+    arma::uvec const &pop,
+    int const V, int const region_id) {
+    // Which lower level districts are sending students to the current upper level district? How many?
+    std::unordered_map<int, int> lower_students;
+    for (int v = 0; v < V; ++v) {
+        if (region_ids(v) != region_id) continue;
+        if (lower_students.find(lower(v)) == lower_students.end()) {
+            lower_students[lower(v)] = 0;
+        }
+        lower_students[lower(v)] += pop(v);
+    }
+
+    // For each lower level school sending students, check if less than 25% 
+    // of students are going to the current upper level district
+    int split_feeders_count = 0;
+    for (auto const &pair : lower_students) {
+        int lower_distr = pair.first;
+        uvec rows_in_lower = find(lower == lower_distr);
+        int lower_total = sum(pop(rows_in_lower));
+        double frac = (double) pair.second / lower_total;
+        if (frac < 0.25) {
+            split_feeders_count += 1;
+        }
+    }
+
+    return split_feeders_count;
+}
+
+
+
+/*
+ * Compute the capacity penalty for district `distr`
+ *
+ */
+template <typename PlanID>
+double eval_capacity_gsmc_version(
+    PlanID const &region_ids,  
+    const arma::uvec &schools, 
+    const arma::uvec &schools_capacity, 
+    arma::uvec const &pop,
+    int const V, int const region_id) {
+    // Get all rows in the current district
+    uvec rows_in_district = find(region_ids == region_id);
+    if (rows_in_district.is_empty()) return 1000;
+    
+    // Which index in schools corresponds to the school for this district?
+    arma::uvec idx_in_schools;
+    for (arma::uword i = 0; i < schools.n_elem; ++i) {
+        if (arma::any(rows_in_district == schools(i))) {
+            idx_in_schools.insert_rows(idx_in_schools.n_elem, arma::uvec{ i });
+        }
+    }
+    if (idx_in_schools.is_empty()) return 1000;
+    unsigned int school_index = idx_in_schools(0);
+    
+    double pop_capacity = schools_capacity(school_index);
+    double pop_assigned = sum(pop(rows_in_district));
+    double ratio = pop_assigned / pop_capacity;
+
+    // Compare ratio
+    if (ratio < 0.85 || ratio > 1.15) {
+        return 20;
+    }
+    else if ((0.85 <= ratio && ratio <= 0.94) || 1.05 <= ratio <= 1.14) {
+        return 10;
+    }
+    else if (0.95 <= ratio && ratio <= 1.04) {
+        return 0;
+    }
+}
+
+
+
 // helper function
 // calculates districts which appear in each county (but not zeros)
 template <typename PlanID>

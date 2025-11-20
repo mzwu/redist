@@ -444,6 +444,66 @@ class PhaseCommuteConstraint : public RegionConstraint {
             int const region1_id, int const region2_id) const override;
 };
 
+// Split feeders constraint
+class SplitFeedersConstraint : public RegionConstraint {
+    private:
+        arma::uvec const lower;
+        arma::uvec const schools;
+        arma::uvec const pop;
+        int const V;
+
+    public:
+        SplitFeedersConstraint(
+            double const strength, const arma::uvec &lower, const arma::uvec &schools, 
+            arma::uvec const &pop, int const V,
+            bool const score_districts_only, bool const hard_constraint, double const hard_threshold) :
+            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            lower(lower),
+            schools(schools),
+            pop(pop),
+            V(V) {}
+
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
+};
+
+// Capacity constraint
+class CapacityConstraint : public RegionConstraint {
+    private:
+        arma::uvec const schools;
+        arma::uvec const schools_capacity;
+        arma::uvec const pop;
+        int const V;
+
+    public:
+        CapacityConstraint(
+            double const strength, const arma::uvec &schools, const arma::uvec &schools_capacity, 
+            arma::uvec const &pop, int const V,
+            bool const score_districts_only, bool const hard_constraint, double const hard_threshold) :
+            RegionConstraint(score_districts_only, strength, hard_constraint, hard_threshold),
+            schools(schools),
+            schools_capacity(schools_capacity),
+            pop(pop),
+            V(V) {}
+
+        double compute_raw_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int region_id) const override;
+        // log constraint for region made by merging region 1 and 2
+        double compute_raw_merged_region_constraint_score(
+            int const num_regions, 
+            PlanVector const &region_ids, RegionSizes const &region_sizes, IntPlanAttribute const &region_pops,
+            int const region1_id, int const region2_id) const override;
+};
+
 
 class CustomRegionConstraint : public RegionConstraint {
     private:
