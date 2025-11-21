@@ -175,6 +175,7 @@ add_constr_split_feeders(
 
 add_constr_capacity(
   constr,
+  strength,
   schools,
   schools_capacity,
   only_districts = TRUE,

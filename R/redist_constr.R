@@ -1333,6 +1333,7 @@ add_constr_split_feeders <- function(
 #' @export
 add_constr_capacity <- function(
                             constr, 
+                            strength,
                             schools, 
                             schools_capacity,
                             only_districts = TRUE,
