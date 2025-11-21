@@ -19,6 +19,8 @@
 \alias{add_constr_edges_rem}
 \alias{add_constr_plan_splits}
 \alias{add_constr_phase_commute}
+\alias{add_constr_split_feeders}
+\alias{add_constr_capacity}
 \alias{add_constr_custom}
 \alias{add_constr_custom_plan}
 \title{Sampling constraints}
@@ -162,6 +164,23 @@ add_constr_phase_commute(
   thresh = NULL
 )
 
+add_constr_split_feeders(
+  constr,
+  strength,
+  lower,
+  schools,
+  only_districts = TRUE,
+  thresh = NULL
+)
+
+add_constr_capacity(
+  constr,
+  schools,
+  schools_capacity,
+  only_districts = TRUE,
+  thresh = NULL
+)
+
 add_constr_custom(constr, strength, fn, only_districts = FALSE, thresh = NULL)
 
 add_constr_custom_plan(
@@ -180,11 +199,7 @@ add_constr_custom_plan(
 \item{current}{The reference map for the phase-in school commute constraint,
 i.e. the current attendance areas.}
 
-\item{only_districts}{Whether or not to apply the constraints to
-districts only. If constraints are only applied to districts then it will
-likely cause a drop in efficiency in the final round. If splitting plans all
-the way this does not affect the final target distribution. This is not relevant
-for constraints that penalize the entire plan instead of specific districts.}
+\item{only_districts}{Boolean indicating whether to only score districts or regions.}
 
 \item{thresh}{Thresholding value for constraints. If set then any plan where
 the constraints score is greater than or equal to \code{thresh} will be rejected
@@ -193,7 +208,7 @@ sample.}
 
 \item{group_pop}{A vector of group population}
 
-\item{total_pop}{An unquoted string indicating the total population column.}
+\item{total_pop}{A vector of total population. Defaults to the population vector used for sampling.}
 
 \item{tgt_group, tgt_other}{Target group shares for the power-type constraint.}
 
@@ -228,9 +243,11 @@ your \link{redist_map}, entering schools = c(1, 2) would indicate that.}
 (in seconds) from each geographical unit to each school. Can be computed via
 \code{redistmetrics::get_commute_matrix()}.}
 
-\item{fn}{A function}
+\item{lower}{The reference map for the split feeders constraint,, i.e. lower-level school attendance areas.}
 
-\item{score_districts_only}{Boolean indicating whether to only score districts or regions.}
+\item{schools_capacity}{A vector of capacities for each school.}
+
+\item{fn}{A function}
 }
 \description{
 The \code{\link[=redist_smc]{redist_smc()}} and \code{\link[=redist_mergesplit]{redist_mergesplit()}} algorithms in this package allow

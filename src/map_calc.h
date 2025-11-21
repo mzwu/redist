@@ -411,10 +411,14 @@ double eval_split_feeders_gsmc_version(
     const arma::uvec &schools, 
     arma::uvec const &pop,
     int const V, int const region_id) {
-    // Which lower level districts are sending students to the current upper level district? How many?
+    
+        // Which lower level districts are sending students to the current upper level district? How many?
     std::unordered_map<int, int> lower_students;
     for (int v = 0; v < V; ++v) {
+        // Skip if not in current upper district
         if (region_ids[v] != region_id) continue;
+
+        // Tally population from each lower district
         if (lower_students.find(lower(v)) == lower_students.end()) {
             lower_students[lower(v)] = 0;
         }
@@ -450,31 +454,21 @@ double eval_capacity_gsmc_version(
     const arma::uvec &schools_capacity, 
     arma::uvec const &pop,
     int const V, int const region_id) {
-    // Get all rows in the current district
-    arma::uvec rows_in_district;  // starts empty
-    for (int i = 0; i < V; ++i) {
-        if (region_ids[i] == region_id) {
-            rows_in_district.insert_rows(rows_in_district.n_rows, 1);
-            rows_in_district(rows_in_district.n_rows - 1) = i;
-        }
-    }
-    if (rows_in_district.is_empty()) return 1000;
-    
-    // Which index in schools corresponds to the school for this district?
-    arma::uvec idx_in_schools;
-    for (arma::uword i = 0; i < schools.n_elem; ++i) {
-        if (arma::any(rows_in_district == schools(i))) {
-            idx_in_schools.insert_rows(idx_in_schools.n_elem, arma::uvec{ i });
-        }
-    }
-    if (idx_in_schools.is_empty()) return 1000;
-    unsigned int school_index = idx_in_schools(0);
-    
-    double pop_capacity = schools_capacity(school_index);
-    double pop_assigned = sum(pop(rows_in_district));
-    double ratio = pop_assigned / pop_capacity;
 
-    // Compare ratio
+    // Count how many people are assigned to current district
+    int pop_assigned = 0;
+    for (int v = 0; v < V; ++v) {
+        if (region_ids[v] == region_id) {
+            pop_assigned += pop(v);
+        }
+    }
+    
+    // What is the capacity of the current district
+    int school_index = region_id - 1; // assume region_id is 1-indexed and schools/schools_capacity are in ascending district ID order
+    double pop_capacity = schools_capacity(school_index);
+
+    // Calculate and compare ratio
+    double ratio = pop_assigned / pop_capacity;
     if (ratio < 0.85 || ratio > 1.15) {
         return 20;
     }
